@@ -1,199 +1,178 @@
 # figma-native-html-reconstruction
 
-**From a 22-artboard portfolio to editable web pages — a personal case study that became a deterministic Design Compiler and an Agent Skill.**
+**Rebuild Figma artboards as editable HTML through a deterministic Design Compiler: real DOM text, independent assets, fixed canvas coordinates, and strict A–G verification.**
 
-**从 22 个作品集画板到可编辑网页：一个从个人网站真实需求出发，最终沉淀为确定性 Design Compiler 与 Agent Skill 的作品案例。**
+**将 Figma 画板重建为可编辑 HTML：通过确定性 Design Compiler 生成固定画板页面，保留真实 DOM 文字与独立素材，并使用严格验收门核对内容、几何、文字、连接器和像素。**
 
-![case study](https://img.shields.io/badge/type-portfolio%20case%20study-6CAAFF?style=flat-square)
-![real DOM](https://img.shields.io/badge/text-real%20DOM-38E07B?style=flat-square)
-![design compiler](https://img.shields.io/badge/layout-deterministic%20plan-FFBF47?style=flat-square)
-![verification](https://img.shields.io/badge/evidence-A--G%20gates-9AA3AD?style=flat-square)
+![figma](https://img.shields.io/badge/Figma-MCP%20%2F%20Figwright-6CAAFF?style=flat-square)
+![architecture](https://img.shields.io/badge/architecture-design%20compiler-38E07B?style=flat-square)
+![text](https://img.shields.io/badge/text-real%20DOM-FFBF47?style=flat-square)
+![python](https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-9AA3AD?style=flat-square)
 
-> 这不是一次“输入截图、输出一张更像截图的页面”的实验。
->
-> 它始于一个更具体的问题：**如何把已经在 Figma 里完成的作品集，变成真正可加载、可编辑、可维护的个人网站页面？**
+## 交付内容与边界
 
-## 项目概览
+输入一个 Figma 画板及其同尺寸参考图，输出可维护的 HTML、独立素材、确定性布局计划和机器可读验收证据。
 
-| 维度 | 内容 |
+| 项目 | 实现方式 |
 |---|---|
-| 项目起点 | 个人网站直接插入作品集图片，加载慢，文字也无法选中和编辑 |
-| 真实对象 | Figma `html` 页中的 22 个大型作品集画板，包含游戏、VR、APP、信息架构与数据可视化等内容 |
-| 核心目标 | 保留原始画板比例与设计关系，同时使用真实 DOM 文字和独立非文字素材 |
-| 技术路线 | Figwright / Figma MCP → Design IR → 唯一 layout plan → 固定画板 HTML → 浏览器验收 |
-| 最终沉淀 | 可复用 Skill、确定性构建脚本、文本与几何审计、A–G 验收门、回归测试和证据模板 |
-| 项目边界 | 不宣称 22 个画板全部通过，不承诺任意 Figma 文件一键达到 1% 或 100% 还原 |
+| 文字 | 真实 DOM 节点，保留逐 run 字体、字号、样式和颜色，不把文字烘焙成图片 |
+| 非文字内容 | 按最大 TEXT-free 子树原生导出，保留复杂路径、蒙版、透明度、阴影与混合效果 |
+| 布局 | 固定画板 stage、绝对定位、原始坐标系；总览缩放只影响显示，不触发画板内部响应式重排 |
+| 构建依据 | 唯一 `layout-plan.json`，构建器不根据截图猜位置，也不读取 raw SDK 自由排版 |
+| 验收 | P0 + A–G 机读质量门；`pass`、`fail`、`unknown` 三态，证据缺失不等于通过 |
+| 交付物 | `page.html`、素材目录、design IR、组件关系、布局计划、截图、指标和各门报告 |
 
-## 01｜起点：把作品集变成网页，而不是把图片搬进网页
+> 本项目面向**固定画板高保真重建**，不是自动生成语义化响应式网站的通用工具，也不承诺任意 Figma 文件都能一键达到指定像素差异。
 
-这个项目最早不是为了做 Skill。
-
-我当时在制作自己的个人网站，最直接的做法是把作品集画板导出成图片，再插入页面。但图片一大，加载就慢；文字也不能选中、搜索或继续编辑。
-
-于是问题变成了：**能不能把这些作品集画板变成真正的 HTML？**
-
-最早的尝试从“游戏角色设计 + 游戏截图”画板开始：拆出文字和图片，做成语义化、响应式页面。
-
-![早期作品集网页实验](docs/portfolio-start.jpg)
-
-但这个版本很快暴露了一个目标冲突：响应式重排虽然“像网页”，却改变了作品集原有的构图。随后目标被重新锁定为：**比例固定，与原始画板保持一致。**
-
-整板图片方案也被明确否决。它看似能规避布局问题，实际上回到了最初的痛点——加载、不可编辑、不可维护，什么都没解决。
-
-由此形成四条不能再退让的项目约束：
-
-1. **文字保持真实 DOM**，不能烘焙成图片。
-2. **非文字素材独立导出**，不能用整板截图冒充网页。
-3. **保留原始画板坐标与比例**，不能在画板内部自由响应式重排。
-4. **结果必须能够复核**，不能只用“看起来差不多”作为交付标准。
-
-## 02｜真正的难题：不是生成 HTML，而是保留设计关系
-
-作品集不是一张风格统一的 landing page。22 个画板里有复杂图片合成、混合字体、长段落、信息架构图、流程图、旋转元素和大量箭头连线。
-
-真正反复出现的，是这些具体而琐碎的问题：
-
-- 标题最后一个字被单独挤到下一行；正文溢出或两块文字重叠。
-- Figma 中已经隐藏的内容被重新渲染，应该显示的文字却没有出现。
-- 元素各自的绝对坐标看似接近，但组件之间的内边距、对齐和相对位置不对。
-- GROUP、INSTANCE、旋转与祖先裁剪使用了不同几何口径，测量结果互相矛盾。
-- 箭头只连到目标外框，尖端没有真正接到边；总览缩放后连线甚至消失。
-
-这些问题让项目从“让 Agent 写页面”变成了一项更明确的工程任务：**把设计稿当作有坐标、有层级、有文字 runs、有组件关系的系统，而不是一张等待临摹的图片。**
-
-## 03｜路线转折：不让 Agent 排版，让设计数据决定排版
-
-项目最关键的设计决策，是把“生成页面”改成“编译设计”。
+## 当前实现路径
 
 ![Design Compiler pipeline](docs/pipeline.png)
 
-整条管线由 `reconstruct.py` 串起：
+完整流程由 `scripts/reconstruct.py` 串联：
 
 ```text
 extract → normalize → analyze → plan → P0 data gate
         → build → verify → one deterministic repair → re-verify
 ```
 
-其中有两条硬规则。
+### 1. 读取设计并导出素材
 
-### 唯一布局计划
+`export_artboard.py` 通过 Figwright / Figma MCP 读取 live 节点树，收集：
 
-`compile_design.py` 将 Figma 导出数据归一化为 design IR、组件关系和确定性的 `layout-plan.json`，同时生成 `planHash`。
+- 画板、节点类型、可见性、层级与组件关系；
+- 文字内容、逐 run 样式、坐标、累积仿射矩阵和祖先裁剪；
+- 最大 TEXT-free 子树及其原生导出素材；
+- 独立连接器、reference、字体清单与异常清单。
 
-`build_fixed_html.py` 只消费这份 plan。Agent 不再根据 reference PNG 猜坐标，也不针对某个节点随手写补偿偏移。参考图只用于最终验收，不参与自由排版。
+整板图片只作为最终验收 reference，不作为网页主体；整板 SVG 也不作为构建输入。
 
-### 数据不完整，就不构建
+### 2. 编译为唯一布局计划
 
-P0 数据门在生成 HTML 前检查画板背景、逐 run 字号、渲染盒、素材落点、导出尺寸与几何口径。缺失或含义不明的数据会被阻断，而不是用 16px、黑色、透明背景等默认值悄悄补齐。
+`compile_design.py` 将导出数据编译为：
 
-这使“看起来像”让位于一个更可复核的原则：**先证明输入是对的，再讨论输出像不像。**
+```text
+manifest
+  → design-ir.json
+  → component-relations.json
+  → layout-plan.json
+  → layout-plan.json.sha256
+```
 
-## 04｜三轮攻坚：把返修经验变成通用能力
+计划中包含画板背景、节点渲染盒、素材落点、文字 runs、行计划、有效裁剪、层级和关系图。`planHash` 用于确认布局计划的版本与可追溯性。
 
-### 文字：从“调整 CSS”到“编译行计划”
+### 3. 构建前执行 P0 数据门
 
-文字是作品集中最密集、也最容易暴露问题的部分。
+`data_gate.py` 在生成 HTML 前检查：
 
-后期方案不再只比较外层文本框，而是保留逐 run 的字体、字号、字重、样式和颜色；遇到需要校准的换行，通过独立 Figma 校准节点与原生 PDF spans 获取真实行文本和基线，生成行计划。
+- `rootFills` 是否完整透传；
+- mixed 字号是否每个 run 都有数值；
+- AUTO line-height 是否被伪造为像素值；
+- rendered 节点是否有合法渲染盒；
+- 素材是否包含 `pngPlacement` 与 `exportSize`；
+- 是否存在坐标族混用或 corner-reprojected 盒。
 
-浏览器端再逐个 TEXT Node 建立 Range，读取真实行盒，检查新增折行、重叠、溢出、字体加载和行计划一致性。固定文本盒的纵向溢出单独记录，不用缩小字号消灭问题。
+默认 strict 模式下，契约失败会阻断构建，而不是用默认字号、默认颜色或猜测坐标继续生成页面。
 
-### 几何与可见性：从“挪元素”到“统一坐标口径”
+### 4. 只根据计划生成 HTML
 
-布局审计逐步区分 `designBox`、`renderAABB`、`pngPlacement`、`exportSize` 和 `effectiveClipRect`，并处理 GROUP 子节点坐标、INSTANCE 导出边界、累积仿射矩阵与祖先有效裁剪。
+`build_fixed_html.py` 只消费 `layout-plan.json`，输出固定尺寸 stage 和绝对定位图层。
 
-验收也不只看每个元素自己的绝对位置，还检查父子 inset、同级间距、对齐轴、基线和连接器接边。隐藏节点、透明节点与设计性遮挡分别处理，不能简单按 `visible=true/false` 一刀切。
+每个映射节点保留 `data-n="<figma-node-id>"`，供浏览器审计脚本重新定位。旋转与嵌套节点使用累积仿射矩阵；祖先裁剪沿节点链计算；文字和素材分别生成，不用整板截图替代页面。
 
-### 非文字素材与连接器：保留合成效果，但不烘焙整板
+### 5. 浏览器验收
 
-不含 TEXT 的最大子树优先原生导出，复杂光影和合成效果因此得以保留；文字仍独立存在于 DOM。
+验收脚本在 Chromium 中读取真实 DOM，而不是只检查 HTML 字符串：
 
-连接器则拆成独立小节点 SVG，使用路径真实端点判断箭头尖端，而不是拿 PNG 外框冒充已经接边。所有连线都与画板内容处于同一个 stage，避免总览缩放后失联。
-
-![作品集中的真实返修对照](docs/portfolio-iteration.jpg)
-
-*一张真实的返修对照：它的价值不是展示“最终已经完美”，而是记录问题如何被定位、修复和重新验证。*
-
-## 05｜验收不是打分，而是保留不通过的权力
-
-项目最后形成了 P0 + A–G 的机读验收门：
-
-| 门 | 关注什么 |
+| 门 | 检查内容 |
 |---|---|
-| P0 / A | 输入数据契约、基准图、viewport、DPR 与版本是否冻结 |
-| B | 应显示内容是否缺失，隐藏或透明内容是否被多渲染 |
-| C | 父子、同级、基线、对齐和接边等相对关系是否成立 |
-| D | 真实文字行盒、逐 run 样式、换行、字体、颜色与溢出 |
-| E | 独立连接器与 SVG 真尖端是否可验证 |
-| F | 原尺寸页面和总览缩放后的实际可见性 |
-| G | 同尺寸、同 DPR、同 reference 下的像素回归 |
+| A | reference、viewport、DPR、阈值和运行清单是否冻结 |
+| B | 内容覆盖、有效可见性、祖先裁剪、隐藏或透明节点是否被错误渲染 |
+| C | 父子 inset、同级间距与顺序、对齐轴、基线、图标中心和接边关系 |
+| D | 逐 TEXT Node Range 行盒、字体加载、额外折行、溢出、颜色与行计划 |
+| E | 独立连接器、SVG 路径真实端点、箭头尖端与目标边 |
+| F | canonical 原尺寸截图及总览 fit 后的真实可见性 |
+| G | 同 viewport、同 DPR、同 reference 下的像素回归 |
 
-每道门都有 `pass`、`fail`、`unknown` 三种状态。**没有采集证据就是 `unknown`，绝不自动算通过。**
+各门报告写入 `evidence/`。任一 `fail` 或 `unknown` 在 strict 模式下都会产生非零退出，并汇总到 `summary.json`。
 
-严格模式默认开启。任一局部缺陷都不能被一张好看的全局平均值掩盖；自动修复也只有一次确定性机会，修不好就如实报告，而不是无限扫参。
+### 6. 单次确定性修复与复验
 
-## 06｜最终沉淀：不是一组页面，而是一套可复用工作流
+文字或连接器失败时，管线最多执行一次对应修复：
 
-这个仓库最终保留的，不只是某次生成的 HTML，而是整个方法可以被再次执行的组成部分：
+- `repair_text`：只修正确定性 CSS 声明，不通过缩小字号消除溢出；
+- `repair_connectors`：重建独立连接器 SVG，并保留备份与回滚；
+- 修复后重新采集浏览器截图、文字、连接器和像素证据。
 
-- `SKILL.md`：任务边界、默认管线、验收和交付合同。
-- `scripts/`：导出、编译、数据门、构建、文本与连接器审计、像素复验。
-- `references/`：几何、字体、连接器、验证和返修 SOP。
-- `tests/`：构建器、编译器和各质量门的回归测试。
-- `evidence/` 输出约定：让每个结论都有机器可读证据，让失败可以回退。
+不会为了让指标通过而隐藏内容、缩放参考图或无限扫描参数。
 
-<details>
-<summary><strong>查看作品集画板的连续检查记录</strong></summary>
+## 关键实现
 
-这些图片用于说明真实案例的覆盖范围与返修对象，不代表 22 个画板均已通过完整 A–G 严格验收。
+### 文字布局
 
-![作品集连续检查第一部分](docs/portfolio-overview-1.jpg)
+- 保留每个 run 的 `characters`、`fontSize`、`fontName`、`fills`、`lineHeight` 和 `letterSpacing`。
+- AUTO line-height 没有实测数据时保留 `normal` 并标记 unresolved，不用盒高除以行数伪造。
+- 可通过独立 Figma 校准节点和原生 PDF spans 生成 `text-calibration.json`；只有拼接后的行文本与原节点完全一致时，才写入 `linePlan`。
+- 浏览器逐 TEXT Node 建立 Range，使用真实行盒核对换行和行计划。
+- 固定文本盒的纵向溢出单列为 `designBoxOverflow`；横向溢出、内容尺寸模式溢出和行计划不一致仍属于硬失败。
 
-![作品集连续检查第二部分](docs/portfolio-overview-2.jpg)
+### 几何与裁剪
 
-</details>
+计划层区分不同坐标口径，避免跨族混算：
 
-## 07｜项目边界：案例不是成功率承诺
+| 字段 | 含义 |
+|---|---|
+| `designBox` | 未旋转、仅乘祖先矩阵的布局盒 |
+| `renderAABB` | 原生导出提供的画板坐标渲染边界 |
+| `pngPlacement` / `exportSize` | 已烘焙旋转的 PNG 在画板中的落点与像素尺寸 |
+| `effectiveClipRect` | 沿祖先链计算后的有效裁剪区域 |
 
-这个项目没有闭合所有目标，也不把一次样本结果外推成通用能力：
+### 字体
 
-- 22 个作品集画板经历了持续转换与返修，但不能写成“22 个画板全部通过”。
-- 最近一次全量较严口径下，只有少数画板达到 `outside-text mismatch ≤ 1%`。
-- 字体、位图内容、抗锯齿、旋转容器复杂裁剪和 live/reference 版本冲突，仍会形成还原下限。
-- 当前路线面向**固定画板高保真重建**，不是自动生成语义化响应式网站的通用方案。
-- 原始 Figwright 安装与原始 Figma 设计稿没有被替换或修改；校准实验使用隔离副本或独立校准文件。
+`check_fonts.py` 检查字体文件是否真实落地，包括 src 路径、MD5、nameID、字重和 cmap 覆盖；浏览器审计再确认字体实际加载。
 
-<details>
-<summary><strong>附录：另一个固定样本 Layout-1 的验证快照</strong></summary>
+缺少字体时先按 [`references/font-sourcing.md`](references/font-sourcing.md) 获取并验证，不把仅写一个 `@font-face` 挂载点视为完成。
 
-这组数据只对应仓库内的 Layout-1 固定样本及其冻结环境：同浏览器、同 viewport、同 reference、DPR 1、mismatch threshold 20/255。它不是上述作品集案例的整体成功率，也不代表当前任意输入都能复现。
+## 安装与配置
 
-| Metric | Early build | Recorded result |
-|---|---:|---:|
-| raw mismatch | 61.04% | **1.875%** |
-| outside-text mismatch | 56.53% | **0.0025%** |
-| text-region mismatch | 61.77% | **2.22%** |
-| SSIM | 0.7962 | **0.9727** |
-| MAE per channel | 32.63 | **1.66** |
+### 1. 准备运行环境
 
-同一份证据也保留了未闭合项：旋转文字盒仍产生 1 条 fail 与 5 条 `unknown` 关系边，旋转竖排文字保留两条契约级 overflow；没有总览页时 F 门为 `unknown`。
+需要：
 
-</details>
+- **Node.js 20.19+ 或 22.12+**：运行 Figwright MCP；
+- **Figma**：免费账户即可；导入开发插件需要 Figma 桌面端；
+- **Python 3.10+**；
+- **Playwright + Chromium**：执行真实浏览器审计；
+- 一个支持 MCP 的客户端，用于连接 Figwright。
 
-## 08｜复盘：这个项目真正解决了什么
+### 2. 配置 Figwright MCP
 
-回头看，最重要的不是把某个百分比压低，而是完成了三次转变：
+在 MCP 客户端的 `.mcp.json` 中加入：
 
-1. **从图片思维到节点思维**：网页由真实文字、独立素材和设计关系组成。
-2. **从 Agent 自由发挥到确定性编译**：布局由数据计划决定，修改可以复现和回退。
-3. **从一次性返修到可复用 Skill**：把文字、几何、连接器和验收中踩过的坑，冻结成下一次可以直接执行的流程。
+```json
+{
+  "mcpServers": {
+    "figwright": {
+      "command": "npx",
+      "args": ["-y", "@figwright/mcp@latest"]
+    }
+  }
+}
+```
 
-这也是 Skill 最终出现的时机：**先把工作流真正跑通，再把工作流做成 Skill，而不是反过来。**
+`npx` 会获取并运行已发布的服务，不需要全局安装。其他 MCP 客户端可使用相同结构。
 
-## Quick start｜从案例到复用
+### 3. 安装并连接 Figma 插件
 
-运行环境需要 Figma、Figwright / Figma MCP、Python 3，以及用于浏览器审计的 Playwright + Chromium。Figwright 的官方安装与插件连接方式见 [Figwright README](https://github.com/awdr74100/figwright)。
+1. 从 [Figwright 最新 Release](https://github.com/awdr74100/figwright/releases/latest) 下载插件 ZIP 并解压。
+2. 在 Figma 桌面端选择 **Menu → Plugins → Development → Import plugin from manifest…**。
+3. 选择解压目录中的 `manifest.json`。
+4. 打开 **Plugins → Development → Figwright**。
+5. 确认插件显示 **Connected**，并在 MCP 客户端执行 `ping` 验证链路。
+
+Figwright 服务端和插件需要配套更新。详细说明以 [Figwright 官方 README](https://github.com/awdr74100/figwright) 为准；本仓库不需要修改版 Figwright。
+
+### 4. 安装本仓库与 Python 依赖
 
 ```bash
 git clone https://github.com/BANANACAT26/figma-native-html-reconstruction.git
@@ -201,43 +180,147 @@ cd figma-native-html-reconstruction
 
 python3 -m pip install pillow numpy scipy playwright fonttools
 python3 -m playwright install chromium
+```
 
-export FIGWRIGHT_SERVER='node /path/to/@figwright/mcp/dist/index.mjs'
+### 5. 配置本仓库环境变量
+
+```bash
+export FIGWRIGHT_SERVER='npx -y @figwright/mcp@latest'
 export FIGWRIGHT_SESSION_ID='<figma-file-session>'
-export FIGWRIGHT_SKIP_TOOLS_LIST=1  # optional
+```
 
+`FIGWRIGHT_SESSION_ID` 是 Figwright `list_files` 返回的文件会话 ID。设置后，客户端会通过 `use_file` 绑定目标 Figma 文件。
+
+可选配置：
+
+```bash
+# 编辑器侧 tools/list 卡住时跳过能力发现，直接按契约工具名调用
+export FIGWRIGHT_SKIP_TOOLS_LIST=1
+
+# 能力发现的单次超时与有界重试
+export FIGWRIGHT_TOOLS_LIST_TIMEOUT=15
+export FIGWRIGHT_TOOLS_LIST_RETRIES=2
+```
+
+如果本机使用已安装的 Figwright 包，也可以直接指定入口：
+
+```bash
+export FIGWRIGHT_SERVER='node /absolute/path/to/@figwright/mcp/dist/index.mjs'
+```
+
+### 6. 运行完整重建
+
+先从 Figma 导出目标画板的同尺寸 `reference.png`。它只用于最终视觉与像素验收，不参与排版。
+
+```bash
 python3 scripts/reconstruct.py \
   --node-id '<artboard-node-id>' \
   --reference reference.png \
   --workdir run-01
 ```
 
-先阅读 [`SKILL.md`](SKILL.md) 了解交付合同，再按任务需要进入 `references/`。建议先跑通一个画板，确认字体、素材和验收环境，再扩大范围。
+如果需要验收总览 fit 后的真实可见性，额外提供总览证据：
 
-## Repository layout
-
-```text
-SKILL.md                     operating contract, default pipeline, A–G gates
-references/
-  sop.md                     production SOP
-  case-study.md              method provenance and limitations
-  geometry-and-connectors.md coordinate systems, transforms and clipping
-  verification.md            evidence and regression rules
-  font-sourcing.md           font acquisition and verification
-scripts/
-  reconstruct.py             one-command strict pipeline
-  export_artboard.py         native export and geometry collection
-  compile_design.py          manifest → IR → relations → layout plan
-  data_gate.py               pre-build contract gate
-  build_fixed_html.py        plan-only HTML builder
-  audit_*.py / repair_*.py   content, text, relations and connector gates
-  verify.py / pixel_diff.py  capture, metrics and evidence hashes
-tests/                       regression suites
-docs/                        case images and README assets
+```bash
+python3 scripts/reconstruct.py \
+  --node-id '<artboard-node-id>' \
+  --reference reference.png \
+  --workdir run-01 \
+  --overview-evidence overview-fit.png
 ```
 
-## License & credits
+### 7. 离线复验
 
-Code and Skill text: MIT. Sample fonts are not redistributed; see [`references/font-sourcing.md`](references/font-sourcing.md).
+已有导出目录时，可以不再读取 live Figma：
 
-原始 Figwright 项目与插件遵循其各自许可。作品集中的设计内容用于本项目方法验证与案例记录。
+```bash
+python3 scripts/reconstruct.py \
+  --reference reference.png \
+  --workdir rerun \
+  --reuse-export-dir run-01/export/artboard \
+  --html run-01/page.html
+```
+
+如果修改了导出数据或编译器，需要重新生成 `layout-plan.json`，不要沿用旧计划验证新页面。
+
+## 输出目录
+
+一次完整运行主要产生：
+
+```text
+run-01/
+  page.html                         可编辑固定画板网页
+  export/artboard/
+    *.png                           独立非文字原生导出素材
+    design-ir.json                  归一化设计数据
+    component-relations.json        组件与相对关系图
+    layout-plan.json                唯一布局计划
+    layout-plan.json.sha256         计划哈希
+  evidence/
+    data-gate.json                  P0 数据契约结果
+    content-ledger.json             B 内容可见性
+    relations-audit.json            C 相对关系
+    text-layout.json                D 文字行盒与字体
+    connectors.json                 E 连接器
+    browser.png                     Chromium 实际截图
+    metrics.json                    G 像素指标
+    run.json                        外部产物哈希与运行清单
+  summary.json                      各门状态、失败项与未知项汇总
+```
+
+`browser.png` 只是验收截图；真正的网页是包含真实 DOM 和独立素材的 `page.html`。
+
+## 常见问题
+
+### MCP 客户端提示 `npx: command not found`
+
+MCP 客户端直接启动进程时，可能不会读取交互式 shell 的 PATH。在终端执行 `which npx`，然后将 `.mcp.json` 的 `command` 改为返回的绝对路径。
+
+### 插件一直显示 Waiting
+
+确认 MCP 客户端正在运行、Figwright 服务已配置、插件在同一台机器的 Figma 中保持打开，并检查本机 loopback 连接是否被安全软件阻止。
+
+### 字体已配置但页面仍使用旧结果
+
+确认构建步骤确实重新执行，并检查 `page.html` 中的 `@font-face`。使用 `scripts/check_fonts.py` 验证字体文件和命名，再用浏览器审计确认 `document.fonts.check()`。
+
+### live 读取或复验卡住
+
+同一个 `FIGWRIGHT_SESSION_ID` 的 live 读取、导出和复验必须串行执行，不要同时启动两路任务访问同一 Figma 会话。
+
+## 已知限制
+
+- 没有校准 sidecar 时，AUTO line-height 仍可能只能使用浏览器 `normal` 并保持 unresolved。
+- 字体、烘焙位图内容、色彩管理和抗锯齿会形成像素还原下限。
+- 非 PNG 旋转容器、复杂裁剪、live/reference 版本冲突需要逐例复验。
+- 内容已烘焙进祖先 PNG 或没有 DOM 盒的节点，部分关系边只能标记 `unknown`。
+- 验收流程保证问题可定位、证据可复核、修改可回退，不保证所有输入自动通过所有质量门。
+
+## 目录结构
+
+```text
+SKILL.md                     Skill 使用合同、默认流程和验收规则
+references/
+  sop.md                     完整执行 SOP
+  figwright-mcp.md           Figwright 配置、串行会话与降级策略
+  geometry-and-connectors.md 坐标、旋转、GROUP/INSTANCE 与裁剪
+  connectors.md              独立连接器与箭头尖端验收
+  verification.md            浏览器、几何、文字与像素验收
+  font-sourcing.md           字体获取、验证与落地
+  qa.md                      返修与回归排查
+scripts/
+  reconstruct.py             一条命令运行完整 strict 管线
+  export_artboard.py         live 读取、原生导出与几何采集
+  compile_design.py          manifest → IR → relations → layout plan
+  data_gate.py               构建前 P0 数据门
+  build_fixed_html.py        只根据 plan 构建 HTML
+  check_fonts.py             字体文件与生效检查
+  audit_*.py / repair_*.py   内容、关系、文字、连接器审计与修复
+  verify.py / pixel_diff.py  截图、像素对比与证据哈希
+tests/                       构建器、编译器和质量门回归测试
+docs/                        README 配图
+```
+
+## License
+
+代码与 Skill 文本采用 MIT。示例字体不随仓库分发，授权说明见 [`references/font-sourcing.md`](references/font-sourcing.md)。Figwright 及其插件遵循原项目许可。
