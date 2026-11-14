@@ -1,8 +1,8 @@
 # figma-native-html-reconstruction
 
-**A Skill that rebuilds Figma artboards as genuinely editable HTML — real DOM text, independent assets, fixed canvas coordinates, and a verification loop that refuses to call anything "close enough".**
+**A Skill that turns Figma artboards into genuinely editable HTML — real DOM text, independent assets, fixed canvas coordinates, and a verification loop that refuses to call anything "close enough".**
 
-**把 Figma 画板高保真重建为可编辑 HTML —— 真实 DOM 文字、独立非文字素材、固定画板坐标，配一套不肯用"看着差不多"蒙混过关的验收闭环。**
+**一个把 Figma 画板重建为可编辑 HTML 的 Skill：真实 DOM 文字、独立非文字素材、固定画板坐标，并配一套不肯用"看着差不多"蒙混过关的验收闭环。**
 
 ![status](https://img.shields.io/badge/skill-ready-38E07B?style=flat-square)
 ![figma](https://img.shields.io/badge/Figma-MCP%20%2F%20Figwright-6CAAFF?style=flat-square)
@@ -12,79 +12,71 @@
 
 ![Layout - 1 rebuilt as HTML](docs/hero.png)
 
----
+## What it does / 它做什么
 
-## Why this exists / 为什么做这个
+Point it at an artboard; get back a page you can actually maintain — text you can select and grep, layers you can inspect, numbers you can verify.
 
-Design-to-HTML tools usually give you one of two things: a picture of a page, or a page that only resembles the design at some other viewport. This Skill takes the third route — treat the artboard as **a coordinate system with layers, z-order and relationships**, then rebuild it as a fixed-size stage where every text node is a real, selectable, auditable DOM node.
+把 Skill 指向一个画板，得到的是一份真正能维护的页面：文字能选中、能搜索，图层能审，数字能被复核。
 
-设计稿转网页的工具通常只给两种结果：一张页面截图，或者一个"只在某个视口下看着像"的页面。这个 Skill 走第三条路——把画板当成**带图层、层级和关系的坐标系**，重建成固定尺寸的 stage，其中每个文字节点都是真实、可选中、可审计的 DOM。
-
-|  | Naive approach / 常见做法 | This Skill / 本 Skill |
+|  | Typical "design to code" output / 常见产出 | What this Skill delivers / 本 Skill 的产出 |
 |---|---|---|
-| Text | baked into the background image | real DOM text, per-run styles preserved |
-| Assets | one full-artboard screenshot | independent native exports, one per TEXT-free subtree |
-| Layout | responsive re-flow, "close enough" | fixed 1440×900 stage, absolute canvas coordinates |
-| Color | eyeballed | blend modes, fills, effects carried from the design data |
-| Fonts | falls back to a system font silently | **missing fonts get downloaded, verified and landed** |
-| Verdict | "looks right" | A–G machine-readable gates, `fail` / `unknown` ≠ `pass` |
+| Text | baked into the background image | real DOM nodes, per-run styles preserved |
+| Assets | one full-artboard screenshot | one native export per TEXT-free subtree |
+| Layout | responsive re-flow that "roughly matches" | fixed 1440×900 stage, absolute canvas coordinates |
+| Effects | eyeballed | blend modes, blurs, fills carried from design data |
+| Connectors | dropped or approximated | independent node SVGs, arrow tip measured |
+| Verdict | "looks close" | machine-readable A–G gates with three states |
 
-## Before / after / 修前修后
+## Three fixes, same code / 同一个页面，三次修因
 
 ![reference vs builds](docs/comparison.png)
 
-Left is the Figma export. Middle is the first build that actually rendered — the blend mode was dropped and two 124 px-blurred effects were placed by the wrong box, so the title fell back to a system font and the green gradient sat 124 px too low. Right is the same pipeline after three root-cause fixes.
+Left: the Figma export. Middle: an early build — the page rendered, but the composition was wrong. Right: the same pipeline after fixing root causes instead of nudging pixels. Each step was driven by a measured signal, not by staring at the screenshot.
 
-左图是 Figma 导出；中间是"能渲染但不正确"的第一版——混合模式丢失、两个带 124px 模糊的图层按错误盒放置，标题回退成系统字体、绿渐变整体下移 124px；右图是修完三处根因之后的同一套管线。
+左图 Figma 导出；中间是"能渲染但不对"的早期版本；右图是只修根因、不动像素之后的同一套管线产出。每一步都由可测量的信号驱动，不是对着截图挪元素。
 
-## The pipeline / 管线
+## How it works / 工作方式
 
 ![pipeline](docs/pipeline.png)
 
-`extract → normalize → plan → P0 data gate → build → verify → repair → re-verify`, all behind one command. Two rules make it trustworthy:
+One command runs the whole chain. Two design choices make the output trustworthy:
 
-- **The plan is the only source of layout.** `compile_design.py` turns the raw Figma export into `layout-plan.json` (with a `planHash`), and the HTML builder consumes nothing else. No agent ever nudges elements by looking at a screenshot.
-- **Nothing is built on missing data.** A P0 gate checks the manifest → IR → plan contract before a single line of HTML exists: root fills, per-run font sizes, render boxes, asset placement, effect-expanded bounds. It blocks the build instead of guessing.
+- **The plan is the only source of layout.** `compile_design.py` turns the raw Figma export into a deterministic `layout-plan.json` (with a content hash); the HTML builder consumes nothing else. No agent ever places an element by looking at a screenshot.
+- **Nothing builds on missing data.** Before any HTML is written, a data gate checks the contract: root fills, per-run font sizes, render boxes, asset placement, effect-expanded bounds. Missing or ambiguous data blocks the build instead of being silently defaulted.
 
-一条命令串起整条管线。两条原则让它可信：**plan 是唯一的排版依据**（Agent 从不对着截图挪元素）；**数据不全就不构建**（P0 数据门在生成 HTML 之前检查契约，宁可阻断也不猜）。
+一条命令跑完整条链。两个设计决定让结果可信：**plan 是唯一排版依据**（Agent 从不对着截图摆放元素）；**数据不全就不构建**（生成 HTML 之前先过数据门，缺失或含糊一律阻断，而不是悄悄用默认值填）。
 
-## Gates: pass, fail, unknown / 三门状态
+Under the hood the builder only emits `.layer` elements absolutely positioned inside a fixed `#stage`, carries each node's accumulated affine matrix, propagates effective clipping from ancestors, and preserves visible blend modes — which is what keeps composed effects looking like the design instead of like a flat export.
+
+底层上，构建器只输出固定 `#stage` 内绝对定位的 `.layer`，透传每个节点的累积仿射矩阵、沿祖先链传播有效裁剪、保留可见的混合模式——这是合成效果看起来仍是"设计"而不是"一张扁平导出"的原因。
+
+## Verification / 验收
 
 ![gate board](docs/gates.png)
 
-Every stage writes a machine-readable report into `evidence/`. A gate is `pass`, `fail`, or `unknown`, and **`unknown` is never a pass** — if the evidence wasn't collected, that is its own finding. Strict mode is the default: any `fail` or `unknown` exits non-zero and names the stage.
+Every stage writes a machine-readable report into `evidence/`. A gate is `pass`, `fail`, or `unknown` — and **`unknown` is never a pass**. If evidence wasn't collected, that is a finding of its own. Strict mode is the default: any `fail` or `unknown` exits non-zero and names the stage.
 
-每道门都把机读报告写进 `evidence/`；`unknown` 表示"证据没采到"，绝不等于通过。默认 strict：任一 `fail` / `unknown` 都非零退出并点名。
+每道门都把机读报告写进 `evidence/`；`unknown` 表示证据没采到，绝不等于通过。默认 strict：任一 `fail` / `unknown` 都非零退出并点名门。
 
-## The part people always get wrong: fonts / 最容易被糊弄过去的一环
+The gates cover content presence and coverage (B), relative geometry across every neighbour pair (C), real text line boxes and wrapping (D), arrow tips of connectors (E), canonical and overview visuals (F), and same-viewport pixel regression (G) — plus a data-contract gate before build (P0). The point is not the score, it's that any single local defect stays visible instead of being averaged away by a good global number.
 
-Missing fonts are **not** a disclosure item — they are a TODO. This Skill ships a font-sourcing procedure and a self-check script, because "I left an `@font-face` mount point, please supply the file yourself" is not a delivery.
+门覆盖内容可见性与覆盖（B）、全部相邻关系（C）、真实文字行盒与折行（D）、连接器箭头尖端（E）、canonical 与总览可见性（F）、同视口像素回归（G），以及构建前的数据契约门（P0）。重点不是分数，而是**任何一个局部缺陷都不会被好看的全局数字抹平**。
 
-- The requirement comes from **per-run** `fontName` (`fontName: 'mixed'` must be expanded — one line can use two families).
-- Scan the machine by name table (`nameID` 1 / 2 / 4 / 6), never by filename.
-- Search the web by exact **PostScript / filename** (`FZXS15--GB1-0.ttf`, `HKGroteskWide-Regular.otf`), then download from the site's **file link**, not its "download client" button.
-- Verify **before** landing: MD5 against the published value, name table, weight, `cmap` coverage.
-- Prove it loaded: `document.fonts.check()` plus `fontsVerified` / `fontsMissing` in the audit report — not just a `font-family` string.
+## Contracts / 硬约束
 
-缺字体是待办，不是可交付的结论。流程与自检脚本都随仓库提供：从 **per-run** 的 `fontName` 取真实需求（`mixed` 必须展开）、按 name 表扫本机、按确切文件名联网找、按 MD5 与 name 表校验后再落地、最后用 `document.fonts.check()` 证明它真的加载了。
+1. **Text stays text.** Nothing is baked into an image, ever.
+2. **Assets stay separate.** Native exports per TEXT-free subtree; never the whole artboard as the page.
+3. **The canvas stays fixed.** No responsive re-flow inside the artboard; scaling is display-only.
+4. **Never guess a color.** Unresolved image fills, unsupported fills and no-fill text are disclosed, not painted black or white.
+5. **Never fake a metric.** No shrinking type to kill overflow, no hiding layers, no rescaling the screenshot to match.
+6. **Missing fonts get resolved, not substituted.** The Skill ships a sourcing procedure and a self-check script (`references/font-sourcing.md`, `scripts/check_fonts.py`) so a real font is downloaded, verified and proven loaded — a `@font-face` stub is not a delivery.
+7. **One deterministic repair pass.** Text and connector failures get exactly one automatic fix attempt; if it still fails, it reports failure instead of scanning parameters in a loop.
 
-```bash
-python3 scripts/check_fonts.py \
-  --fonts-dir fonts --css fonts/fonts.css --html page.html \
-  --plan export/layout-plan.json --text-manifest export/text-manifest.json \
-  --glyphs "ABCabc0123"
-# exit 0 → every family+style is landed; exit 1 → go download it
-```
-
-Two silent failure modes are documented in the reference, because both were hit for real: a reuse path that skipped the build step (so the "re-verified" page was the old one, `@font-face` count 0), and a stale `layout-plan.json` that skipped recompilation (so an export fix never reached the plan).
-
-文档里还记了两个真实踩过的坑：复用导出目录时跳过 build，导致"复验"的是旧页面；以及 `layout-plan.json` 没删，导致改过的导出数据根本没进 plan。
-
-## Metrics from the included case / 附带的真实案例指标
+## Results from the included case / 附带案例的实测结果
 
 Same browser, same viewport, same reference, DPR 1, mismatch threshold 20/255.
 
-| Metric | First working build | Final |
+| Metric | Early build | Final |
 |---|---|---|
 | raw mismatch | 61.04% | **1.875%** |
 | outside-text mismatch | 56.53% | **0.0025%** |
@@ -92,35 +84,29 @@ Same browser, same viewport, same reference, DPR 1, mismatch threshold 20/255.
 | SSIM | 0.7962 | **0.9727** |
 | MAE per channel | 32.63 | **1.66** |
 
-![residual heatmap](docs/heatmap.png)
+Not claimed: rotated text boxes still produce one failing and five `unknown` relation edges, rotated vertical text keeps two contract-level overflows, and the overview gate stays `unknown` when there is no overview page. All three are printed in the delivery.
 
-What is left is sub-pixel stripe phase and glyph antialiasing — no block-level displacement, no missing content, no wrong colors. What is **not** claimed: the C gate still reports one `fail` and five `unknown` on rotated text boxes, the D gate keeps two rotated vertical boxes overflowing by contract, and F stays `unknown` because a single-artboard build has no overview page. All three are printed in the delivery instead of being averaged away.
-
-剩下的残差只是细条纹的亚像素相位与字形抗锯齿，没有整块错位、没有内容缺失。**没有**声称的部分同样写进交付：C 门在旋转文字盒上仍报 1 条 fail + 5 条 unknown，D 门保留两条旋转竖排盒的口径 overflow，F 门因为没有总览页而保持 `unknown`——不取平均蒙过去。
+未声称的部分同样写进交付：旋转文字盒仍会产生 1 条 fail + 5 条 unknown 的关系边，旋转竖排文字保留两条契约级 overflow，没有总览页时 F 门保持 `unknown`。
 
 ## Quick start / 快速开始
 
 ```bash
-# 1. install into your agent's skills root
-git clone https://github.com/xjjm123123123/figma-native-html-reconstruction.git
+git clone https://github.com/BANANACAT26/figma-native-html-reconstruction.git
 
-# 2. dependencies
 pip install pillow numpy scipy playwright fonttools
 playwright install chromium
 
-# 3. point the client at your Figwright / Figma MCP server
 export FIGWRIGHT_SERVER='node /path/to/@figwright/mcp/dist/index.mjs'
 export FIGWRIGHT_SESSION_ID='<figma-file-session>'
 export FIGWRIGHT_SKIP_TOOLS_LIST=1        # optional: skip capability discovery
 
-# 4. one command, live Figma → verified HTML
 python3 scripts/reconstruct.py \
   --node-id '<artboard-node-id>' --reference reference.png --workdir run-01
 ```
 
-The Skill itself is plain Markdown + Python: read [`SKILL.md`](SKILL.md) for the operating contract, then `references/` for the SOP, the Figwright conventions, geometry/connectors and the font-sourcing playbook.
+The Skill is plain Markdown plus Python — start with [`SKILL.md`](SKILL.md) for the operating contract, then dip into `references/` as the task needs.
 
-Skill 本体就是 Markdown + Python：先读 [`SKILL.md`](SKILL.md) 掌握交付边界，再按需进 `references/` 查 SOP、Figwright 约定、几何与连接器、以及字体获取手册。
+Skill 本体是 Markdown 加 Python：先读 [`SKILL.md`](SKILL.md) 掌握交付边界，再按需进 `references/`。
 
 ## Repository layout / 目录结构
 
@@ -133,7 +119,7 @@ references/
   connectors.md              connector verdicts: SVG true tip vs PNG bbox
   verification.md            how to verify without fooling yourself
   qa.md                      "metric improved but looks wrong" triage
-  font-sourcing.md           where fonts come from, what to reject, how to prove they loaded
+  font-sourcing.md           tracing, verifying and landing a missing font
   case-study.md              provenance and limits of the method
 scripts/
   reconstruct.py             one-command pipeline (strict by default)
@@ -142,34 +128,21 @@ scripts/
   data_gate.py               P0 contract gate, blocks the build
   build_fixed_html.py        plan → fixed-canvas HTML (blend modes, isolation, @font-face)
   check_fonts.py             font landing self-check (name table, weight, cmap, src resolution)
-  verify.py / capture.py / pixel_diff.py       capture, metrics, heatmap, hashes
+  verify.py / capture.py / pixel_diff.py       capture, metrics, overlay, hashes
   audit_*.py / repair_*.py   gates B–E and their one deterministic repair pass
 tests/                       regression suites (builder, gates, compiler)
 evals/                       fixtures for the scripts
-docs/                        README images + make_images.py (generates them from real renders)
+docs/                        README images + make_images.py (regenerates them from real renders)
 ```
 
-## Design contracts / 硬约束
+## Limits / 边界
 
-1. **Text stays text.** No text is baked into an image, ever.
-2. **Assets stay separate.** One native export per TEXT-free subtree; never the whole artboard.
-3. **The canvas stays fixed.** No responsive re-flow inside the artboard.
-4. **Never guess a color.** Missing image fills, unsupported fills and no-fill text are disclosed, not painted black.
-5. **Never fake a metric.** No shrinking font-size to kill overflow, no hiding layers, no scaling the screenshot to match.
-6. **Download before disclosing.** A missing font is a task, not an excuse.
-
-## Known limits / 已知边界
-
-- AUTO line-height without a calibration sidecar stays `line-height: normal` (unresolved, and reported as such).
-- Rotated vs unrotated box families produce `unknown` relation edges; that is a measurement-family gap, not a layout bug — and it stays visible in the report.
-- The method makes a rebuild locatable, auditable and reversible. It does **not** promise any Figma file lands under 1% mismatch: baked bitmap content, color management, antialiasing and live/reference version drift all set a floor.
+- AUTO line-height without a calibration sidecar stays `line-height: normal`, and says so.
+- Baked bitmap content, color management and antialiasing set a floor no DOM rebuild can remove.
+- The method makes a rebuild locatable, auditable and reversible. It does not promise any Figma file lands under 1% mismatch.
 
 ## License & credits / 许可与致谢
 
-Code and Skill text: MIT. The fonts used in the sample artboard are **not** shipped here — 方正像素15 is free for non-commercial use only (commercial use requires a license from Founder Type), and HK Grotesk is OFL. Font files stay with their owners; this repo only documents how to obtain and verify them.
+Code and Skill text: MIT. Fonts used in the sample artboard are not shipped here — the licensing note lives in [`references/font-sourcing.md`](references/font-sourcing.md).
 
-代码与 Skill 文本采用 MIT。示例画板用到的字体**不随仓库分发**——方正像素15 仅限非商业使用（商用需向方正取得授权），HK Grotesk 为 OFL 授权。字体文件归各权利人所有，本仓库只记录如何获取与校验。
-
----
-
-*If this saved you a week of "why is the text wrong", a star is cheap. / 如果它帮你省了几天"文字为什么不对"的排查，点个 star 不花钱。*
+代码与 Skill 文本采用 MIT；示例画板用到的字体不随仓库分发，授权口径见 [`references/font-sourcing.md`](references/font-sourcing.md)。

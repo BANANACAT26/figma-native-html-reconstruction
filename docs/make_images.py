@@ -4,7 +4,6 @@
 Outputs into ./ (docs/):
   hero.png          — the finished 1440x900 render, framed
   comparison.png    — Figma reference vs 3 build rounds, labeled with real metrics
-  heatmap.png       — final residual heatmap + where the residual lives
   pipeline.png      — the Design Compiler pipeline with its hard gates
   gates.png         — A–G gate board for the sample artboard
 
@@ -95,24 +94,6 @@ def comparison(panels, out):
     return canvas.size
 
 
-def heatmap(src, out):
-    im = Image.open(src).convert("RGB")
-    w, h = im.size
-    pad, cap = 36, 96
-    canvas = Image.new("RGB", (w + pad * 2, h + pad * 2 + cap), BG)
-    d = ImageDraw.Draw(canvas)
-    canvas.paste(im, (pad, pad))
-    d.rectangle([pad - 1, pad - 1, pad + w, pad + h], outline=BORDER)
-    text(d, (pad, h + pad + 18), "Residual heatmap", 26, TEXT, bold=True)
-    text(d, (pad, h + pad + 50),
-         "1.875% of pixels differ by more than 20/255 — concentrated in sub-pixel stripe phase "
-         "and glyph antialiasing, not in structure.", 19, MUTED)
-    text(d, (pad, h + pad + 74), "No block-level displacement left after the effect-bounds fix.",
-         19, GREEN)
-    canvas.save(out)
-    return canvas.size
-
-
 def pipeline(out):
     stages = [
         ("extract", "live Figma → manifest + native PNG", BLUE),
@@ -192,12 +173,11 @@ def main():
     hero(root / "hero.png", HERE / "hero.png")
     comparison([
         (root / "ref.png", "Figma reference", "the design, exported at 1x", MUTED),
-        (root / "r2.png", "First working build",
-         "blend mode fixed; fonts and effect bounds still wrong — 61.0%", RED),
+        (root / "r2.png", "Early build",
+         "blend mode dropped, blurred layers misplaced — 61.0%", RED),
         (root / "r3.png", "Final",
-         "fonts landed + effect bounds fixed — 1.875%, SSIM 0.973", GREEN),
+         "blend mode + effect bounds fixed — 1.875%, SSIM 0.973", GREEN),
     ], HERE / "comparison.png")
-    heatmap(root / "heat.png", HERE / "heatmap.png")
     pipeline(HERE / "pipeline.png")
     gates([
         ("P0  data gate", "pass", "rootFills, per-run font sizes, render boxes, asset placement", GREEN),
