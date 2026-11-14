@@ -25,6 +25,24 @@
 
 > 本项目面向**固定画板高保真重建**，不是自动生成语义化响应式网站的通用工具，也不承诺任意 Figma 文件都能一键达到指定像素差异。
 
+## 案例对照
+
+### 案例 1：Layout-1 固定画板
+
+![Figma reference、早期构建与最终 HTML 对照](docs/comparison.png)
+
+左为 Figma reference，中为早期构建，右为经过根因修复后的 HTML。三联图用于展示同一实现管线的修正过程，不作为任意输入的效果承诺。
+
+### 案例 2：作品集 frame-02 全页重建
+
+| Figma 原稿 | HTML 还原（Chromium 实际截图） |
+|---|---|
+| ![frame-02 Figma 原稿](docs/case-portfolio-reference.jpg) | ![frame-02 HTML 还原](docs/case-portfolio-browser.jpg) |
+
+两边均来自同一组 6735×2381 原始对照，仅做等比缩略以便在 README 中阅读。右侧是包含真实 DOM 文字和独立素材的 `page.html` 渲染结果，不是把原稿图片作为网页展示。
+
+这是受控原型的视觉案例，不表示该画板已通过完整 A–G strict 验收。
+
 ## 当前实现路径
 
 ![Design Compiler pipeline](docs/pipeline.png)
