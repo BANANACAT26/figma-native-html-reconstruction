@@ -1,0 +1,72 @@
+{
+  "viewport": [
+    320,
+    180
+  ],
+  "dpr": 1,
+  "stageOrigin": {
+    "x": 0,
+    "y": 0,
+    "width": 320,
+    "height": 180
+  },
+  "nodes": [
+    {
+      "id": "card",
+      "dom": {
+        "x": 20,
+        "y": 30,
+        "width": 120,
+        "height": 80,
+        "right": 140,
+        "bottom": 110,
+        "cx": 80,
+        "cy": 70
+      },
+      "delta_dom_minus_figma": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "id": "label",
+      "dom": {
+        "x": 160,
+        "y": 45,
+        "width": 120,
+        "height": 40,
+        "right": 280,
+        "bottom": 85,
+        "cx": 220,
+        "cy": 65
+      },
+      "delta_dom_minus_figma": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    }
+  ],
+  "relations": [
+    {
+      "source": "card",
+      "target": "label",
+      "source_x_edge": "right",
+      "target_x_edge": "left",
+      "source_y_edge": "cy",
+      "target_y_edge": "cy",
+      "expected_dx": 20,
+      "expected_dy": 5,
+      "observed": {
+        "dx": 20,
+        "dy": -5
+      },
+      "delta_dx": 0,
+      "delta_dy": -10
+    }
+  ],
+  "note": "Only like-for-like boxes may be compared. Rotation/clipping/container mismatches need reclassification."
+}

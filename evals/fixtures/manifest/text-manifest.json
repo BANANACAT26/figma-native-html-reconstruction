@@ -1,0 +1,8 @@
+{
+  "texts":[{"nodeId":"label","characters":"Hello","visible":true,"opacity":1,"zIndexChain":[2],
+    "relativeToArtboard":{"x":160,"y":45,"width":120,"height":40},
+    "fontName":{"family":"Arial","style":"Regular"},"fontSize":20,
+    "fills":[{"type":"SOLID","color":{"r":0.067,"g":0.067,"b":0.067}}],
+    "lineHeight":{"unit":"AUTO"},"letterSpacing":{"unit":"PERCENT","value":0},
+    "textAlignHorizontal":"LEFT","textAlignVertical":"TOP","textAutoResize":"NONE","rotation":0}]
+}

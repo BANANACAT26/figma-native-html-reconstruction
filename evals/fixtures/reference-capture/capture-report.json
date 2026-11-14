@@ -1,0 +1,31 @@
+{
+  "html": "/work/skills/figma-native-html-reconstruction/evals/fixtures/ideal.html",
+  "reference": "/work/skills/figma-native-html-reconstruction/evals/fixtures/blank.png",
+  "target_px": [
+    320,
+    180
+  ],
+  "browser_pixel_size": [
+    320,
+    180
+  ],
+  "dpr": 1,
+  "viewport": [
+    320,
+    180
+  ],
+  "scroll_size": [
+    320,
+    180
+  ],
+  "stage_rect": {
+    "x": 0,
+    "y": 0,
+    "w": 320,
+    "h": 180
+  },
+  "fonts_status": "loaded",
+  "text_node_count": 1,
+  "text_mask_fraction": 0.094722,
+  "verification": "passed"
+}

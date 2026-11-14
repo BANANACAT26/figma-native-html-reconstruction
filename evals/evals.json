@@ -1,0 +1,29 @@
+{
+  "skill_name": "figma-native-html-reconstruction",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "使用给定 ideal/candidate HTML、reference 和 geometry spec，独立跑通固定画板截图、像素、几何和文本验收，保存报告与证据；不得修改输入或缩放图片凑指标。",
+      "expected_output": "理想样本差异为0，改色样本被识别，相对几何和文本审计覆盖范围清楚。",
+      "files": ["evals/fixtures/ideal.html", "evals/fixtures/candidate.html", "evals/fixtures/reference.png", "evals/fixtures/geometry.json"],
+      "expectations": [
+        "ideal raw mismatch 为0且 candidate raw mismatch 约为0.166667",
+        "两个节点绝对几何差为0，card右缘到label左缘dx=20、中心dy=-5",
+        "有canonical截图、metrics、run哈希和文本覆盖范围说明",
+        "没有通过缩放图像或修改输入制造通过"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "一个源卡片右缘应连到目标卡片左缘，横向箭头尖端还差30px；另有一条纵向连接也未贴合。给出修复与验收方案，不能删除原路径或改变卡片。",
+      "expected_output": "以源/目标边和完整连接器为核心，不用普通直线补丁，同时验横向与纵向箭头尖端。",
+      "files": [],
+      "expectations": [
+        "明确记录source/target、连接边、两端点和中段路径",
+        "不建议在箭头前补普通直线，而是让完整连接器箭头尖端接目标边",
+        "纵向连接采用同一端点验收规则",
+        "独立页和缩放总览都要求实际视觉复验"
+      ]
+    }
+  ]
+}

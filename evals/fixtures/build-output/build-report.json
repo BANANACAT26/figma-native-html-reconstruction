@@ -1,0 +1,11 @@
+{
+  "output": "/work/skills/figma-native-html-reconstruction/evals/fixtures/build-output/page.html",
+  "artboardId": "sample",
+  "artboardSize": [
+    320,
+    180
+  ],
+  "asset_layers": 1,
+  "text_layers": 1,
+  "note": "Generic baseline; run geometry/text/pixel/visual verification before delivery."
+}

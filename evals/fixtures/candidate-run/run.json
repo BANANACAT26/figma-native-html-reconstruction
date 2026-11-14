@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-10-31T06:08:30.086224+00:00",
+  "html": "/work/skills/figma-native-html-reconstruction/evals/fixtures/candidate.html",
+  "reference": "/work/skills/figma-native-html-reconstruction/evals/fixtures/reference.png",
+  "out": "/work/skills/figma-native-html-reconstruction/evals/fixtures/candidate-run",
+  "viewport": [
+    320,
+    180
+  ],
+  "device_scale_factor": 1,
+  "threshold_rgb": 20,
+  "background": "000000",
+  "html_sha256": "cda7399a381afc625dd73430405e3c02a21105a777eb150c5891aac17d55c24a",
+  "reference_sha256": "d204dcc071e8b1b905e8feeeedaa6f8b75c12b5a997eb3d77214e88b626d1703",
+  "browser_sha256": "c92daa09c1c94087347062c49fbb4eb5f07dbcee53ae317cb0ea7d68fa2d5010",
+  "metrics_sha256": "d3630ae6fc7b99f45a926da886983b0d83f82c7b63530d133339d8d2c0ae8782",
+  "raw": {
+    "pixels": 57600,
+    "mismatch_px": 9600,
+    "mismatch_fraction": 0.166667,
+    "mae_per_channel_mean": 22.667,
+    "mae_r": 34.0,
+    "mae_g": 8.5,
+    "mae_b": 25.5,
+    "ssim_mean": 0.998564
+  },
+  "outside_text": {
+    "pixels": 52144,
+    "mismatch_px": 9600,
+    "mismatch_fraction": 0.184106,
+    "mae_per_channel_mean": 25.038,
+    "mae_r": 37.558,
+    "mae_g": 9.389,
+    "mae_b": 28.168,
+    "ssim_mean": 0.998413
+  },
+  "text_region": {
+    "pixels": 5456,
+    "mismatch_px": 0,
+    "mismatch_fraction": 0.0,
+    "mae_per_channel_mean": 0.0,
+    "mae_r": 0.0,
+    "mae_g": 0.0,
+    "mae_b": 0.0,
+    "ssim_mean": 1.0
+  }
+}

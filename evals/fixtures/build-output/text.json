@@ -1,0 +1,41 @@
+{
+  "nodes": [
+    {
+      "nid": "label",
+      "text": "Hello",
+      "box": {
+        "x": 160,
+        "y": 45,
+        "w": 120,
+        "h": 40
+      },
+      "lines": [
+        {
+          "x": 160,
+          "y": 45,
+          "w": 120,
+          "h": 40
+        },
+        {
+          "x": 160,
+          "y": 45,
+          "w": 45.578125,
+          "h": 22
+        }
+      ],
+      "overflow": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "unexpectedWrap": [],
+  "nonDesignOverlapPairs": [],
+  "overflow": [],
+  "errors": [],
+  "coverage": {
+    "textManifestProvided": true,
+    "unexpectedWrapChecked": true,
+    "note": "Without text-manifest, observed lines/overflow are reported but unexpected-wrap judgment is disabled."
+  }
+}

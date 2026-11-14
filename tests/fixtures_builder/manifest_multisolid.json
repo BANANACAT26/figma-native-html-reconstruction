@@ -1,0 +1,27 @@
+{
+  "artboardId": "fixture-root",
+  "artboardName": "synthetic",
+  "artboardSize": {"width": 800, "height": 600},
+  "rootFills": [
+    {"type": "SOLID", "visible": true, "opacity": 1, "color": {"r": 1, "g": 1, "b": 1}},
+    {"type": "SOLID", "visible": true, "opacity": 1, "color": {"r": 0, "g": 0, "b": 0}}
+  ],
+  "rootBackgroundAsset": null,
+  "assets": [],
+  "containerVisuals": [
+    {
+      "nodeId": "fixture-cont-1",
+      "type": "FRAME",
+      "zIndexChain": null,
+      "rotation": 0,
+      "opacity": 1,
+      "renderAABB": {"x": 50, "y": 50, "width": 200, "height": 80},
+      "fills": [
+        {"type": "SOLID", "visible": true, "opacity": 1, "color": {"r": 1, "g": 0, "b": 0}},
+        {"type": "SOLID", "visible": true, "opacity": 0.5, "color": {"r": 0, "g": 0, "b": 1}}
+      ],
+      "strokes": [],
+      "cornerRadius": 8
+    }
+  ]
+}

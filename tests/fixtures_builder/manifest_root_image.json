@@ -1,0 +1,41 @@
+{
+  "artboardId": "fixture-root-image",
+  "artboardName": "synthetic root image",
+  "artboardSize": {"width": 640, "height": 400},
+  "rootFills": [
+    {"type": "SOLID", "visible": true, "opacity": 1, "color": {"r": 0, "g": 0, "b": 0}},
+    {"type": "IMAGE", "visible": true, "opacity": 1, "scaleMode": "FILL",
+     "imageRef": "img-ref-anon-0001", "imageTransform": [[1, 0, 0], [0, 1, 0]]},
+    {"type": "SOLID", "visible": true, "opacity": 0.6,
+     "color": {"r": 0.13, "g": 0.01, "b": 0.19}},
+    {"type": "IMAGE", "visible": true, "opacity": 1, "scaleMode": "FIT"}
+  ],
+  "rootBackgroundAsset": null,
+  "imageAssetMap": {
+    "img-ref-anon-0001": "anon-bg-0001.png",
+    "img-hash-anon-0002": "anon-bg-0001.png"
+  },
+  "rootImageAssets": [
+    {"key": "img-ref-anon-0001", "kind": "imageRef", "file": "anon-bg-0001.png",
+     "scaleMode": "FILL", "status": "exported"},
+    {"key": null, "kind": null, "file": null, "scaleMode": "FIT", "status": "no-image-ref"}
+  ],
+  "assets": [],
+  "containerVisuals": [
+    {
+      "nodeId": "fixture-cont-img",
+      "type": "FRAME",
+      "zIndexChain": [0],
+      "rotation": 0,
+      "opacity": 1,
+      "effectiveOpacity": 1,
+      "renderAABB": {"x": 80, "y": 80, "width": 200, "height": 120},
+      "fills": [
+        {"type": "IMAGE", "visible": true, "opacity": 1, "scaleMode": "FILL",
+         "imageHash": "img-hash-anon-0002"}
+      ],
+      "strokes": [],
+      "cornerRadius": 0
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "image_size_px": [
+    320,
+    180
+  ],
+  "browser": "/work/skills/figma-native-html-reconstruction/evals/fixtures/candidate-run/browser.png",
+  "reference": "/work/skills/figma-native-html-reconstruction/evals/fixtures/reference.png",
+  "thresholds": {
+    "primary_mismatch": 20.0,
+    "levels": [
+      10,
+      20,
+      40
+    ],
+    "definition": "任一 RGB 通道 |Δ| > T 判为 mismatch 像素"
+  },
+  "ssim_definition": {
+    "domain": "luminance 0.299R+0.587G+0.114B",
+    "window": "gaussian 1.5sigma (~11px)",
+    "C1": 6.502500000000001,
+    "C2": 58.522499999999994
+  },
+  "raw": {
+    "pixels": 57600,
+    "mismatch_px": 9600,
+    "mismatch_fraction": 0.166667,
+    "mae_per_channel_mean": 22.667,
+    "mae_r": 34.0,
+    "mae_g": 8.5,
+    "mae_b": 25.5,
+    "ssim_mean": 0.998564
+  },
+  "outside_text": {
+    "pixels": 52144,
+    "mismatch_px": 9600,
+    "mismatch_fraction": 0.184106,
+    "mae_per_channel_mean": 25.038,
+    "mae_r": 37.558,
+    "mae_g": 9.389,
+    "mae_b": 28.168,
+    "ssim_mean": 0.998413
+  },
+  "text_region": {
+    "pixels": 5456,
+    "mismatch_px": 0,
+    "mismatch_fraction": 0.0,
+    "mae_per_channel_mean": 0.0,
+    "mae_r": 0.0,
+    "mae_g": 0.0,
+    "mae_b": 0.0,
+    "ssim_mean": 1.0
+  },
+  "text_mask_coverage": 0.09472,
+  "mismatch_at_levels": {
+    "T10": {
+      "fraction": 0.166667
+    },
+    "T20": {
+      "fraction": 0.166667
+    },
+    "T40": {
+      "fraction": 0.166667
+    }
+  },
+  "global": {
+    "max_abs_diff": 204.0,
+    "mean_signed_bias_R": 34.0,
+    "mean_signed_bias_G": -8.5,
+    "mean_signed_bias_B": -25.5
+  },
+  "hotspots": [
+    {
+      "bbox": [
+        20,
+        30,
+        140,
+        110
+      ],
+      "area_px": 9600,
+      "centroid": [
+        79.5,
+        69.5
+      ],
+      "mean_mag": 204.0
+    }
+  ],
+  "hotspot_count_above_min_area": 1
+}

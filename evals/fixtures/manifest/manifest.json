@@ -1,0 +1,8 @@
+{
+  "artboardId":"sample","artboardName":"sample","artboardSize":{"width":320,"height":180},
+  "rootFills":[{"type":"SOLID","color":{"r":1,"g":1,"b":1}}],
+  "assets":[{"nodeId":"card","name":"card","visible":true,"opacity":1,"zIndexChain":[1],
+    "pngPlacement":{"x":20,"y":30,"width":120,"height":80},"exportSize":{"width":120,"height":80},
+    "effectiveClipRect":{"x":0,"y":0,"width":320,"height":180},"asset":"card.png"}],
+  "containerVisuals":[]
+}

@@ -1,0 +1,25 @@
+{
+  "image_size_px": [
+    16,
+    16
+  ],
+  "raw": {
+    "pixels": 256,
+    "mismatch_px": 8,
+    "mismatch_fraction": 0.03125,
+    "ssim_mean": 0.99
+  },
+  "outside_text": {
+    "pixels": 200,
+    "mismatch_px": 8,
+    "mismatch_fraction": 0.04,
+    "ssim_mean": 0.99
+  },
+  "text_region": {
+    "pixels": 56,
+    "mismatch_px": 0,
+    "mismatch_fraction": 0.0,
+    "ssim_mean": 1.0
+  },
+  "hotspot_count_above_min_area": 1
+}

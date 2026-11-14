@@ -1,0 +1,11 @@
+{
+  "width": 320,
+  "height": 180,
+  "nodes": [
+    {"id":"card","selector":"[data-n='card']","expected":{"x":20,"y":30,"width":120,"height":80}},
+    {"id":"label","selector":"[data-n='label']","expected":{"x":160,"y":45,"width":120,"height":40}}
+  ],
+  "relations": [
+    {"source":"card","target":"label","source_x_edge":"right","target_x_edge":"left","source_y_edge":"cy","target_y_edge":"cy","expected_dx":20,"expected_dy":-5}
+  ]
+}
